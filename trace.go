@@ -65,8 +65,21 @@ func main() {
 }
 
 func printLineNode(n ast.Node) {
-	switch n.(type) {
-	case *ast.CallExpr:
+	fmt.Printf("id: %v\n", reflect.TypeOf(&ast.Ident{}))
+	t := reflect.TypeOf(n)
+	switch t {
+
+	case reflect.TypeOf(&ast.Ident{}):
+		if n.(*ast.Ident).Obj != nil {
+			var b bytes.Buffer
+			printer.Fprint(&b, fset, n)
+			fmt.Printf("CallExpr: %s\n", b.String())
+		}
+
+	case reflect.TypeOf(&ast.CallExpr{}),
+		reflect.TypeOf(&ast.SelectorExpr{}),
+		reflect.TypeOf(&ast.CommClause{}),
+		reflect.TypeOf(&ast.ExprStmt{}):
 		var b bytes.Buffer
 		printer.Fprint(&b, fset, n)
 		fmt.Printf("CallExpr: %s\n", b.String())
@@ -75,7 +88,7 @@ func printLineNode(n ast.Node) {
 func walk(n ast.Node) {
 	depth++
 	printLineNode(n)
-	switch n.(type) {
+	switch tt := n.(type) {
 	case ast.Node:
 
 		v := reflect.ValueOf(n)
@@ -84,9 +97,10 @@ func walk(n ast.Node) {
 			for i := 0; i < x.NumField(); i++ {
 				field := x.Field(i)
 				fmt.Printf(
-					"%s%s : %s : %s\n",
+					"%s%s : %s : %s : %s\n",
 					strings.Repeat("  ", depth),
 					field.Type(),
+					reflect.TypeOf(tt),
 					field.Type().Kind(),
 					fset.Position(n.Pos()),
 				)
