@@ -9,10 +9,35 @@ import (
 	"go/printer"
 	"go/token"
 	"reflect"
+	"strings"
 )
 
-// A replacement for any CallExpr
-type TimedCallExpr ast.CallExpr
+var depth int
+
+// TimedNode is a replacement for any CallExpr that performs the original
+// CallExpr but wraps it in a timing block and returns the value of the
+// CallExpr. It also prints the original source code of the CallExpr.
+func replace(n ast.CallExpr, typ interface{}, fset *token.FileSet) {
+
+	var b bytes.Buffer
+
+	printer.Fprint(&b, fset, n)
+	s := b.String()
+
+	if len(s) > 0 {
+		fmt.Printf("%s\t%s:\t%s\n", reflect.TypeOf(typ), s, fset.Position(n.Pos()))
+	}
+
+	//n = &ast.FuncLit{
+	//	Fun: n,
+	//	Lparen   n.Pos,
+	//	Args     []Expr
+	//	Ellipsis token.Pos
+	//	Rparen   token.Pos
+	//}
+}
+
+var fset *token.FileSet
 
 func main() {
 	var file = flag.String("file", "", "A file to trace")
@@ -23,23 +48,65 @@ func main() {
 		flag.PrintDefaults()
 	}
 
-	fset := token.NewFileSet()
+	fset = token.NewFileSet()
 	tree, err := parser.ParseFile(fset, *file, nil, 0)
 
 	if err != nil {
 		panic(err)
 	}
+	//ast.Inspect(tree, func(n ast.Node) bool {
+	//	switch typ := n.(type) {
+	//	default:
+	//		replace(n.(*ast.CallExpr), typ, fset)
+	//	}
+	//})
+	depth = 0
+	walk(tree)
+}
 
-	ast.Inspect(tree, func(n ast.Node) bool {
+func printLineNode(n ast.Node) {
+	switch n.(type) {
+	case *ast.CallExpr:
 		var b bytes.Buffer
-
 		printer.Fprint(&b, fset, n)
+		fmt.Printf("CallExpr: %s\n", b.String())
+	}
+}
+func walk(n ast.Node) {
+	depth++
+	printLineNode(n)
+	switch n.(type) {
+	case ast.Node:
 
-		s := b.String()
+		v := reflect.ValueOf(n)
+		x := reflect.Indirect(v)
+		if !v.IsNil() {
+			for i := 0; i < x.NumField(); i++ {
+				field := x.Field(i)
+				fmt.Printf(
+					"%s%s : %s : %s\n",
+					strings.Repeat("  ", depth),
+					field.Type(),
+					field.Type().Kind(),
+					fset.Position(n.Pos()),
+				)
 
-		if len(s) > 0 {
-			fmt.Printf("%s\t%s:\t%s\n", reflect.TypeOf(n), s, fset.Position(n.Pos()))
+				if field.Type().Kind() == reflect.Slice {
+					if field.CanInterface() && field.Interface() != nil {
+						s := reflect.ValueOf(field.Interface())
+						for j := 0; j < s.Len(); j++ {
+							walk(s.Index(j).Interface().(ast.Node))
+						}
+					}
+				}
+				if field.CanInterface() && field.Interface() != nil {
+					switch field.Interface().(type) {
+					case ast.Node:
+						walk(field.Interface().(ast.Node))
+					}
+				}
+			}
 		}
-		return true
-	})
+	}
+	depth--
 }
