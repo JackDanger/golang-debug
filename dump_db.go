@@ -10,6 +10,9 @@ func () main() {
 	dump(someDB, "SELECT * FROM some_table")
 }
 
+// Usage:
+// PrintRows(merchant.SqualorDB.DB, "SELECT * from contact_groups")
+
 // PrintRows prints the results of a SQL query in json format
 func PrintRows(db *DB, sqlString string) (string, error) {
 	rows, err := db.Query(sqlString)
