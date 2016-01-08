@@ -6,8 +6,8 @@ import (
 	"fmt"
 )
 
-func () main() {
-	dump(someDB, "SELECT * FROM some_table")
+func main() {
+	//dump(someDB, "SELECT * FROM some_table")
 }
 
 // Usage:
