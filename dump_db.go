@@ -14,7 +14,7 @@ func () main() {
 // PrintRows(merchant.SqualorDB.DB, "SELECT * from contact_groups")
 
 // PrintRows prints the results of a SQL query in json format
-func PrintRows(db *DB, sqlString string) (string, error) {
+func PrintRows(db *sql.DB, sqlString string) (string, error) {
 	rows, err := db.Query(sqlString)
 	if err != nil {
 		return "", err
