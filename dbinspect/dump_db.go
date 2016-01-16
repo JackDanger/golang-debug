@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	//dump(someDB, "SELECT * FROM some_table")
+	PrintRows(someDB, "SELECT * FROM some_table")
 }
 
 // Usage:
