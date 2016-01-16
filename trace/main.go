@@ -46,6 +46,7 @@ func main() {
 	if *file == "" {
 		fmt.Printf("Specify a filename to run and trace")
 		flag.PrintDefaults()
+		return
 	}
 
 	fset = token.NewFileSet()
