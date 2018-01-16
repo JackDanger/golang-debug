@@ -7,7 +7,7 @@ import (
 	"syscall"
 )
 
-func init() {
+func DumpGoroutinesOnSigQUIT() {
 	var debugChan = make(chan os.Signal, 1)
 	signal.Notify(debugChan, syscall.SIGQUIT)
 	go func() {
