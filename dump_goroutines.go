@@ -7,13 +7,20 @@ import (
 	"syscall"
 )
 
-func DumpGoroutinesOnSigQUIT() {
+func DumpGoroutines() {
+	pprof.Lookup("goroutine").WriteTo(os.Stdout, 1)
+}
+
+func DumpGoroutinesOnSig(sig os.Signal) {
 	var debugChan = make(chan os.Signal, 1)
-	signal.Notify(debugChan, syscall.SIGQUIT)
+	signal.Notify(debugChan, sig)
 	go func() {
 		select {
 		case <-debugChan:
-			pprof.Lookup("goroutine").WriteTo(os.Stdout, 1)
+			DumpGoroutines()
 		}
 	}()
+}
+func DumpGoroutinesOnSigQUIT() {
+	DumpGoroutinesOnSig(syscall.SIGQUIT)
 }
